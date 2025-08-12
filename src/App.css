@@ -7,8 +7,9 @@ body {
   width: 100%; /* Full width */
   margin: 0; /* Remove default margin */
   padding: 0; /* Remove default padding */
+  font-family: "Manrope", sans-serif;
+  color: #969494;
 }
-
 
 .logo {
   height: 6em;

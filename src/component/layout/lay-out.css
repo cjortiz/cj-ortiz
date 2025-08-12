@@ -1,0 +1,146 @@
+.cursor {
+  display: inline-block;
+  animation: blink 1s steps(2) infinite;
+  background: linear-gradient(to right, rgb(178, 182, 186));
+}
+
+.main-layout {
+  display: flex;
+  position: relative;
+  flex-direction: row;
+  height: 100vh;
+  background-color: #111111;
+  padding-left: 100px;
+  padding-right: 100px;
+}
+
+.main-layout-mobile {
+  display: flex;
+  justify-content: center;
+  justify-items: center;
+  align-content: center;
+  height: 100vh;
+  width: 100%;
+  flex-direction: row;
+  border: 1px solid red;
+}
+
+.parent-card {
+  padding: 2em;
+  flex-direction: row;
+  justify-content: center;
+  position: relative;
+  display: flex;
+}
+
+.image-container {
+  margin-top: 10px;
+  height: 120px;
+  width: 120px;
+  border-radius: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset -5px -5px 10px rgba(255, 255, 255, 0.7),
+    /* light inner top-left */ inset 5px 5px 15px rgba(13, 39, 80, 0.13),
+    /* darker inner bottom-right */ 0px 10px 15px rgba(0, 0, 0, 0.1),
+    /* Subtle main shadow */ 0px 4px 6px rgba(0, 0, 0, 0.05); /* Soft secondary shadow */
+}
+
+.left-card-width {
+  width: 18%;
+}
+
+.right-card-width {
+  flex: 1;
+}
+
+.snake {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: #4caf50;
+  border-radius: 50%;
+  animation: snake-path 5s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+}
+
+.light-orbit {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: #ffcc00;
+  border-radius: 50%;
+  box-shadow: 0 0 20px #ffcc00;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -150px);
+  animation: revolve 4s linear infinite;
+}
+
+@keyframes revolve {
+  0% {
+    transform: translate(-50%, -150px) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -150px) rotate(360deg);
+  }
+}
+
+/* Tablets */
+@media (min-width: 768px) and (max-width: 992px) {
+  .left-card-width {
+    width: 25%;
+  }
+}
+
+/* Mobile */
+@media (min-width: 0px) and (max-width: 767px) {
+  .left-card-width {
+    width: 95%;
+    height: 100vh;
+  }
+  .parent-card {
+    padding: 0.5em;
+  }
+  .right-card-width {
+    display: none;
+  }
+
+  .main-layout {
+    width: 94%;
+    height: 200vh;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes snake-path {
+  0% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(280px, 0);
+  }
+  50% {
+    transform: translate(280px, 280px);
+  }
+  75% {
+    transform: translate(0, 280px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}

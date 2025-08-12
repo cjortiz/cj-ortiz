@@ -1,101 +1,97 @@
-import { useCallback } from "react";
-import Particles from "react-tsparticles";
-import { loadFull } from "tsparticles";
+import { useEffect, useState, useRef } from "react";
+import { Particles } from "react-tsparticles";
+import * as THREE from "three";
+import html2canvas from "html2canvas";
 
-interface ParticleBackgroundProps {
-  onParticlesLoaded: () => void;
-}
+const ParticleBackground = () => {
+  const [particleImage, setParticleImage] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const threeContainerRef = useRef<HTMLDivElement | null>(null);
 
-const ParticleBackground = (props: ParticleBackgroundProps) => {
-  const { onParticlesLoaded } = props;
-  const particlesInit = useCallback(async (engine) => {
-    console.log("Ss");
-    await loadFull(engine); // Load full tsparticles engine
+  useEffect(() => {
+    if (!containerRef.current || !threeContainerRef.current) return;
 
-    // Custom shape registration
-    engine.addShape("customStar", {
-      draw: (context, particle, radius) => {
-        context.beginPath();
-        const spikes = 5;
-        const outerRadius = radius;
-        const innerRadius = radius / 2;
-        let rotation = (Math.PI / 2) * 3;
-        let x = particle.position.x;
-        let y = particle.position.y;
-        let step = Math.PI / spikes;
+    // Create a scene, camera, and renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ alpha: true });
 
-        context.moveTo(x, y - outerRadius);
+    // Create a cube to be used as the custom particle
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const cube = new THREE.Mesh(geometry, material);
+    scene.add(cube);
 
-        for (let i = 0; i < spikes; i++) {
-          x = particle.position.x + Math.cos(rotation) * outerRadius;
-          y = particle.position.y + Math.sin(rotation) * outerRadius;
-          context.lineTo(x, y);
-          rotation += step;
+    // Set the camera position and the renderer size
+    camera.position.z = 3; // Make sure the cube is within the camera's view
+    renderer.setSize(100, 100); // Set canvas size for particle image
 
-          x = particle.position.x + Math.cos(rotation) * innerRadius;
-          y = particle.position.y + Math.sin(rotation) * innerRadius;
-          context.lineTo(x, y);
-          rotation += step;
-        }
+    // Append renderer's DOM element to the container
+    threeContainerRef.current.appendChild(renderer.domElement);
 
-        context.lineTo(particle.position.x, particle.position.y - outerRadius);
-        context.closePath();
-        context.fill();
-      },
-    });
-    onParticlesLoaded();
+    // Render the scene and convert to an image after it has been drawn
+    const convertToImage = async () => {
+      // Use html2canvas to capture the scene rendered by Three.js
+      const canvas = await html2canvas(threeContainerRef.current!);
+      const imageData = canvas.toDataURL("image/png");
+      setParticleImage(imageData); // Set the image data as the particle texture
+    };
+
+    // Wait for the first render to happen before capturing the image
+    setTimeout(() => {
+      convertToImage();
+    }, 1000); // Wait a little bit for the first render
+
+    // Animation loop to update the scene
+    const animate = () => {
+      requestAnimationFrame(animate);
+      cube.rotation.x += 0.01; // Rotate the cube
+      cube.rotation.y += 0.01;
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    // Resize handling
+    const onResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener("resize", onResize);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("resize", onResize);
+      threeContainerRef.current?.removeChild(renderer.domElement);
+    };
   }, []);
 
+  // Show loading state if the particle image isn't ready yet
+  if (!particleImage) {
+    return <div>Loading particles...</div>;
+  }
+
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100vh",
-        zIndex: -2,
-      }}
-    >
+    <div>
+      {/* This is the container for the Three.js canvas */}
+      <div ref={threeContainerRef} style={{ display: "none" }}></div>
+
+      {/* This is where react-tsparticles is used to display the particle background */}
       <Particles
         id="tsparticles"
-        init={particlesInit}
         options={{
-          background: {
-            color: {
-              value: "#000000", // Black background
-            },
-          },
           particles: {
-            number: {
-              value: 1000, // Number of particles
-              density: {
-                enable: true,
-                area: 800,
-              },
-            },
-            // shape: {
-            //   type: "image", // Use an image as the particle shape
-            //   image: {
-            //     src: "/path/to/your/texture.png", // Path to the texture image
-            //     width: 50, // Width of the particle (in pixels)
-            //     height: 50, // Height of the particle (in pixels)
-            //   },
-            // },
             shape: {
-              type: ["circle", "customStar"], // Include multiple shapes
-            },
-            color: {
-              value: "#ffffff", // Starting color for particles (red)
-              animation: {
-                enable: true, // Enable color animation
-                speed: 10, // Speed of color change
-                sync: false, // Particles animate independently
+              type: "image",
+              image: {
+                src: particleImage, // Use the generated 3D texture as particle image
+                width: 20,
+                height: 20,
               },
             },
             move: {
               enable: true,
-              speed: 0.05,
+              speed: 1,
               direction: "none",
               random: true,
               straight: false,
@@ -104,17 +100,14 @@ const ParticleBackground = (props: ParticleBackgroundProps) => {
               },
             },
             size: {
-              value: 0.5, // Base size of particles
-              random: { enable: true, minimumValue: 1 }, // Randomize size
-              animation: {
-                enable: true, // Enable size animation
-                speed: 5, // Animation speed
-                minimumValue: 0.5, // Minimum size during animation
-                sync: false, // Each particle animates independently
-              },
+              value: 10, // Adjust the size of the particles
             },
           },
-
+          background: {
+            color: {
+              value: "#000000",
+            },
+          },
           detectRetina: true,
         }}
       />
